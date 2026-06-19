@@ -114,30 +114,47 @@ DATABASES = {
 }
 
 # ---------------------------------------------------------------------------
-# Cache (Redis)
 # ---------------------------------------------------------------------------
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": env("REDIS_URL", default="redis://redis:6379/0"),
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "SOCKET_CONNECT_TIMEOUT": 5,
-            "SOCKET_TIMEOUT": 5,
-            "RETRY_ON_TIMEOUT": True,
-            "MAX_CONNECTIONS": 1000,
-            "CONNECTION_POOL_KWARGS": {"max_connections": 100},
-        },
-        "KEY_PREFIX": "aforro",
-        "TIMEOUT": env.int("CACHE_TTL", default=300),
+# Cache (Redis / In-memory)
+# ---------------------------------------------------------------------------
+USE_REDIS = env.bool("USE_REDIS", default=True)
+
+if USE_REDIS:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": env("REDIS_URL", default="redis://redis:6379/0"),
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "SOCKET_CONNECT_TIMEOUT": 5,
+                "SOCKET_TIMEOUT": 5,
+                "RETRY_ON_TIMEOUT": True,
+                "MAX_CONNECTIONS": 1000,
+                "CONNECTION_POOL_KWARGS": {"max_connections": 100},
+            },
+            "KEY_PREFIX": "aforro",
+            "TIMEOUT": env.int("CACHE_TTL", default=300),
+        }
     }
-}
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "unique-snowflake",
+        }
+    }
 
 # ---------------------------------------------------------------------------
 # Celery
 # ---------------------------------------------------------------------------
-CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://redis:6379/1")
-CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://redis:6379/2")
+if USE_REDIS:
+    CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://redis:6379/1")
+    CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://redis:6379/2")
+else:
+    CELERY_TASK_ALWAYS_EAGER = True
+    CELERY_TASK_EAGER_PROPAGATES = True
+    CELERY_BROKER_URL = "memory://"
+    CELERY_RESULT_BACKEND = "cache+memory://"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
