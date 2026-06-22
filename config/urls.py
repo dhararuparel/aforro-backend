@@ -12,9 +12,12 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
-from apps.common.views import HealthCheckView
+from apps.common.views import HealthCheckView, IndexView
 
 urlpatterns = [
+    # Dashboard Index
+    path("", IndexView.as_view(), name="index"),
+
     # Admin
     path("admin/", admin.site.urls),
 

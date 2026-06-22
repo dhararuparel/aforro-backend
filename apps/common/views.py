@@ -6,6 +6,7 @@ import logging
 
 from django.db import connection
 from django.core.cache import cache
+from django.views.generic import TemplateView
 from drf_spectacular.utils import extend_schema
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -71,3 +72,40 @@ class HealthCheckView(APIView):
             http_status = 503
 
         return Response(health, status=http_status)
+
+
+class IndexView(TemplateView):
+    """
+    Main landing page displaying links to OpenAPI documentation and endpoints.
+    """
+    template_name = "index.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["api_endpoints"] = [
+            {
+                "name": "Swagger UI",
+                "url": "/api/docs/",
+                "desc": "Explore and test the API endpoints interactively via Swagger.",
+                "badge": "Interactive Docs"
+            },
+            {
+                "name": "ReDoc",
+                "url": "/api/redoc/",
+                "desc": "Explore the structured OpenAPI schema using ReDoc.",
+                "badge": "Reference Docs"
+            },
+            {
+                "name": "API Root",
+                "url": "/api/",
+                "desc": "Check out the DRF API entry point.",
+                "badge": "REST API"
+            },
+            {
+                "name": "Health Status",
+                "url": "/health/",
+                "desc": "Verify database and cache connectivity.",
+                "badge": "System status"
+            }
+        ]
+        return context
