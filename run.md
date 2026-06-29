@@ -9,9 +9,6 @@ Ensure you are in the project folder (c:\Users\DELL\Desktop\aforro) and run:
 In PowerShell:
 powershell
 .\venv\Scripts\Activate.ps1
-In Command Prompt (CMD):
-cmd
-venv\Scripts\activate.bat
 3. Apply migrations and seed sample data
 Run the following commands to make sure the database is up to date and populated with test data:
 

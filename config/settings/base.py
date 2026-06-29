@@ -1,11 +1,12 @@
 """
-Base Django settings for Aforro Backend.
+Base Django settings for DocuMind AI Backend.
 
 These settings are shared across all environments.
 Environment-specific overrides live in development.py and production.py.
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -48,14 +49,15 @@ THIRD_PARTY_APPS = [
     "corsheaders",
     "django_filters",
     "drf_spectacular",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
 ]
 
 LOCAL_APPS = [
     "apps.common",
-    "apps.products",
-    "apps.stores",
-    "apps.orders",
-    "apps.search",
+    "apps.authentication",
+    "apps.collections",
+    "apps.documents",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -95,6 +97,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
+# Custom User Model
+AUTH_USER_MODEL = "authentication.User"
+
 # ---------------------------------------------------------------------------
 # Database
 # ---------------------------------------------------------------------------
@@ -132,7 +137,7 @@ if USE_REDIS:
                 "MAX_CONNECTIONS": 1000,
                 "CONNECTION_POOL_KWARGS": {"max_connections": 100},
             },
-            "KEY_PREFIX": "aforro",
+            "KEY_PREFIX": "documind",
             "TIMEOUT": env.int("CACHE_TTL", default=300),
         }
     }
@@ -203,6 +208,9 @@ REST_FRAMEWORK = {
     "DEFAULT_PARSER_CLASSES": [
         "rest_framework.parsers.JSONParser",
     ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
         "rest_framework.filters.OrderingFilter",
@@ -215,23 +223,35 @@ REST_FRAMEWORK = {
 }
 
 # ---------------------------------------------------------------------------
+# Simple JWT Settings
+# ---------------------------------------------------------------------------
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": False,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
+
+# ---------------------------------------------------------------------------
 # DRF Spectacular (Swagger/OpenAPI)
 # ---------------------------------------------------------------------------
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Aforro Backend API",
+    "TITLE": "DocuMind AI API",
     "DESCRIPTION": (
-        "Production-quality REST API for managing products, stores, "
-        "inventory, orders, and search functionality."
+        "Production-quality REST API for managing document collections, "
+        "document files, search indexing, and secure JWT authentication."
     ),
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
     "TAGS": [
-        {"name": "Products", "description": "Product catalog management"},
-        {"name": "Stores", "description": "Store management"},
-        {"name": "Inventory", "description": "Store inventory management"},
-        {"name": "Orders", "description": "Order processing"},
-        {"name": "Search", "description": "Product search and autocomplete"},
+        {"name": "Authentication", "description": "User registration, login, and profile"},
+        {"name": "Collections", "description": "Workspace collections management"},
+        {"name": "Documents", "description": "Document ingestion, file storage, and version control"},
         {"name": "Health", "description": "Service health checks"},
     ],
 }
@@ -286,7 +306,7 @@ LOGGING = {
         "file": {
             "level": "INFO",
             "class": "logging.handlers.RotatingFileHandler",
-            "filename": BASE_DIR / "logs" / "aforro.log",
+            "filename": BASE_DIR / "logs" / "documind.log",
             "maxBytes": 1024 * 1024 * 10,  # 10 MB
             "backupCount": 5,
             "formatter": "verbose",

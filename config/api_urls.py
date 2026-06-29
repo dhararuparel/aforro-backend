@@ -15,8 +15,7 @@ URL structure:
 from django.urls import include, path
 
 urlpatterns = [
-    path("products/", include("apps.products.urls")),
-    path("stores/", include("apps.stores.urls")),
-    path("orders/", include("apps.orders.urls")),
-    path("search/", include("apps.search.urls")),
+    path("auth/", include("apps.authentication.urls")),
+    path("collections/", include("apps.collections.urls")),
+    path("documents/", include("apps.documents.urls")),
 ]

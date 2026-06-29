@@ -27,10 +27,6 @@ urlpatterns = [
     # API v1
     path("api/", include("config.api_urls")),
 
-    # Root paths for direct assignment compatibility
-    path("orders/", include("apps.orders.urls")),
-    path("stores/", include("apps.stores.urls")),
-
     # OpenAPI Schema
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     # Swagger UI
